@@ -1,0 +1,12 @@
+<resources>
+    <style name="AppTheme" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">#11151D</item>
+        <item name="android:navigationBarColor">#11151D</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:colorAccent">#F4BE65</item>
+    </style>
+    <string name="widget_description">Original pixel weather, temperature, and your favorite app shortcut.</string>
+    <string name="setup_widget">Tap to set up Retro Weather</string>
+</resources>
