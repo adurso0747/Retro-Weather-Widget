@@ -1,5 +1,7 @@
 # First-release acceptance criteria
 
+The five user requirements and configurable app shortcut are mandatory. See [screenshot review](SCREENSHOT_REVIEW.md) for all reference-derived features, implementation status, and remaining work.
+
 ## Artwork and presentation
 
 - Original weather art is built from explicit pixels on a 32×32 grid, not generated pictures.
@@ -10,11 +12,19 @@
 - Preview and widget use the same pixel renderer. Resizing preserves whole pixel blocks.
 - °F/°C, four icon positions, text/icon visibility, scale, independent solid colors, custom RGB colors, and transparent/solid background are configurable.
 - At least one of icon and temperature remains visible.
+- Outline and solid pixel themes are selectable; previews and day/night gallery reflect the selected theme.
+- Icon and text have independent size, padding, horizontal and vertical alignment controls.
+- Icon, text and background each support opacity and solid colors or two-to-four-stop gradients. Stops can be edited, added, removed and reordered.
+- Automatic/fixed sizing, outer padding and overall alignment preserve whole pixel blocks. Fixed size is bounded by the host's available space.
+- Contrast outlines and transparent cutout mode are available. Invisible cutout configurations fall back to normal content with an explanation.
+- Existing saved widgets retain their settings when the new appearance fields are absent.
+- Detailed appearance controls show a live preview; Save remains accessible on the main screen.
 
 ## Setup and location
 
 - Fixed city/postal-code search disambiguates region/country. Direct latitude/longitude input validates ranges.
 - Fixed mode works without location permission.
+- A chosen fixed location or resolved device location can open in a map app, falling back to a browser map.
 - Dynamic mode accepts approximate or precise Android location; stale fixes are checked and acquisition times out.
 - Background permission has a separate explanation and settings flow.
 - Denial, disabled GPS, or missing background permission preserves usable cached data and explains limitations.

@@ -31,10 +31,10 @@ The debug APK is signed with the local debug key. A distributable release needs 
 1. Open **Retro Weather**.
 2. Choose a fixed city or coordinates, or enable **Follow device** and grant location permission.
 3. Tap **Refresh** to retrieve weather. In dynamic mode, **Find my location** also refreshes it.
-4. Select units, icon position, visibility, size, and colors. The initial look is white pixel art on a transparent background.
+4. Select units, icon position, visibility, and outline/solid theme. Open **Icon settings**, **Text settings**, or **Background** for sizes, padding, alignment, colors, gradients, and opacity. **Dimensions** controls overall sizing/alignment; **Special effects** contains outlines and cutout. The initial look is white pixel art on a transparent background.
 5. Under **Tap shortcut**, choose a launchable app (for example, your preferred weather app). Clear the selection to open Retro Weather instead.
 6. Save and choose **Add to home screen**, or add Retro Weather through the launcher's widget picker.
-7. Use the **Your widgets** selector in Retro Weather to edit individual widgets. Each widget has its own location, appearance, and shortcut.
+7. Use the **Your widgets** selector in Retro Weather to edit individual widgets. Each widget has its own location, appearance, and shortcut. Detailed editors change a draft; tap **Save widget** to persist it.
 
 Adding a widget through the launcher opens configuration; canceling does not save a new configuration. App pinning requires confirmation in the launcher. Support for resizing and exact cell dimensions varies by launcher.
 
@@ -79,6 +79,6 @@ The optional API key is encrypted with AES-GCM using an Android Keystore key. It
 
 ## Release scope and verification
 
-See [acceptance criteria](docs/ACCEPTANCE.md) for shipped behavior and [verification notes](docs/VERIFICATION.md) for tests and remaining physical-device checks. Forecasts, animation, custom text templates, gradients, background scenes, cutout effects, and deep links are intentionally deferred.
+See [acceptance criteria](docs/ACCEPTANCE.md), the [screenshot-by-screenshot review](docs/SCREENSHOT_REVIEW.md), and [verification notes](docs/VERIFICATION.md). Gradients, solid icons, opacity, independent sizing/alignment, outlines and cutout are implemented. Forecasts, animation, custom text templates, explicit locale/timezone controls, background scenes, global overlays, recent colors and app deep links remain unfinished.
 
 Data attribution: Open-Meteo, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Temperatures are rounded and condition codes mapped to original artwork. Optional fallback data by WeatherAPI.com. Third-party software remains under its respective licenses.

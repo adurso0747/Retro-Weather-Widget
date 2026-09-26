@@ -93,6 +93,7 @@ class MainActivity : ComponentActivity() {
             if (next.shortcutPackage != config.shortcutPackage) shortcutNotice = ""
             savedJson = next.json().toString()
         }
+        fun changeAppearance(next: Appearance) { change(config.copy(appearance = next)) }
         var weather by remember { mutableStateOf(store.weather(store.resolved(config))) }
         var message by remember { mutableStateOf(store.status(widgetId)) }
         var busy by remember { mutableStateOf(false) }
@@ -194,7 +195,16 @@ class MainActivity : ComponentActivity() {
             message = if (accepted) "Confirm placement on your home screen." else "Use your launcher's Widgets menu to add Retro Weather."
         }
 
-        Column(Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)) {
+        Scaffold(containerColor = Ink, bottomBar = {
+            Surface(color = Ink, shadowElevation = 8.dp) {
+                Row(Modifier.fillMaxWidth().navigationBarsPadding().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { save() }, modifier = Modifier.weight(1f).height(50.dp)) { Text("Save widget", fontWeight = FontWeight.Bold) }
+                    if (intent.action != AppWidgetManager.ACTION_APPWIDGET_CONFIGURE)
+                        OutlinedButton(onClick = { pin() }, modifier = Modifier.weight(1f).height(50.dp)) { Text("Add to home screen", fontSize = 12.sp) }
+                }
+            }
+        }) { insets ->
+        Column(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)) {
             Spacer(Modifier.height(22.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("RW", color = Amber, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Black, fontSize = 26.sp)
@@ -250,20 +260,34 @@ class MainActivity : ComponentActivity() {
                         TextButton(onClick = { dialog = "coordinates" }) { Text("Coordinates") }
                     }
                 }
+                store.resolved(config)?.let { place ->
+                    TextButton(onClick = {
+                        val map = Intent(Intent.ACTION_VIEW, Uri.parse("geo:${place.key}?q=${place.key}(${Uri.encode(place.name)})"))
+                        if (runCatching { startActivity(map) }.isFailure)
+                            openUrl("https://www.openstreetmap.org/?mlat=${place.latitude}&mlon=${place.longitude}#map=12/${place.latitude}/${place.longitude}")
+                    }) { Text("Open on map") }
+                }
             }
             Section("02 / STYLE", "Appearance") {
                 Label("Temperature")
                 ChoiceRow(listOf("Fahrenheit  °F", "Celsius  °C"), if (config.fahrenheit) 0 else 1) { change(config.copy(fahrenheit = it == 0)) }
                 Label("Icon position")
                 ChoiceRow(Layout.entries.map { it.label }, config.layout.ordinal) { change(config.copy(layout = Layout.entries[it])) }
+                Label("Icon theme")
+                ChoiceRow(IconTheme.entries.map { it.label }, config.appearance.theme.ordinal) { changeAppearance(config.appearance.copy(theme = IconTheme.entries[it])) }
                 Toggle("Weather icon", config.showIcon) { if (it || config.showTemperature) change(config.copy(showIcon = it)) }
                 Toggle("Temperature", config.showTemperature) { if (it || config.showIcon) change(config.copy(showTemperature = it)) }
                 Label("Scale · ${(config.scale * 100).toInt()}%")
                 Slider(config.scale, onValueChange = { change(config.copy(scale = it)) }, valueRange = 0.4f..1f, steps = 5)
-                Palette("Icon color", config.iconColor) { change(config.copy(iconColor = it)) }
-                Palette("Text color", config.textColor) { change(config.copy(textColor = it)) }
-                Toggle("Transparent background", config.backgroundColor == 0) { change(config.copy(backgroundColor = if (it) 0 else 0xff11151d.toInt())) }
-                if (config.backgroundColor != 0) Palette("Background color", config.backgroundColor) { change(config.copy(backgroundColor = it)) }
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { dialog = "icon-style" }) { Text("Icon settings") }
+                    OutlinedButton(onClick = { dialog = "text-style" }) { Text("Text settings") }
+                    OutlinedButton(onClick = { dialog = "base-style" }) { Text("Background") }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = { dialog = "dimensions" }) { Text("Dimensions") }
+                    TextButton(onClick = { dialog = "effects" }) { Text("Special effects") }
+                }
                 TextButton(onClick = { dialog = "gallery" }) { Text("Weather icons") }
             }
             Section("03 / ACTION", "Tap shortcut") {
@@ -295,12 +319,13 @@ class MainActivity : ComponentActivity() {
                 }
                 TextButton(onClick = { dialog = "about" }) { Text("Data sources & privacy") }
             }
-            Button(onClick = { save() }, modifier = Modifier.fillMaxWidth().height(54.dp), shape = RoundedCornerShape(16.dp)) { Text("Save widget", fontWeight = FontWeight.Bold, fontSize = 16.sp) }
-            if (intent.action != AppWidgetManager.ACTION_APPWIDGET_CONFIGURE) OutlinedButton(onClick = { pin() }, modifier = Modifier.fillMaxWidth().padding(top = 10.dp).height(50.dp)) { Text("Add to home screen") }
             Spacer(Modifier.height(26.dp))
+        }
         }
 
         when (dialog) {
+            "icon-style", "text-style", "base-style", "dimensions", "effects" ->
+                AppearanceEditor(dialog, config, weather, onChange = { change(it) }, onDismiss = { dialog = "" })
             "search" -> AlertDialog(onDismissRequest = { dialog = "" }, title = { Text("Find your location") }, text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.verticalScroll(rememberScrollState())) {
                     OutlinedTextField(query, { query = it }, label = { Text("City or postal code") }, singleLine = true)
@@ -368,12 +393,13 @@ class MainActivity : ComponentActivity() {
             }, confirmButton = { TextButton(onClick = { dialog = "" }) { Text("Done") } })
             "gallery" -> AlertDialog(onDismissRequest = { dialog = "" }, title = { Text("Weather icons") }, text = {
                 Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ChoiceRow(IconTheme.entries.map { it.label }, config.appearance.theme.ordinal) { changeAppearance(config.appearance.copy(theme = IconTheme.entries[it])) }
                     Text("Original 32 × 32 grids. Day and night variants below.", color = Muted)
                     WeatherKind.entries.forEach { kind ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             listOf(true, false).forEach { day ->
                                 val sample = Weather(18.0, kind, day, System.currentTimeMillis(), System.currentTimeMillis(), "Preview", "")
-                                val bitmap = remember(kind, day) { PixelRenderer.render(WidgetConfig(showTemperature = false, iconColor = 0xfff4be65.toInt()), sample, 96, 96) }
+                                val bitmap = remember(kind, day, config.appearance.theme) { PixelRenderer.render(WidgetConfig(showTemperature = false, iconColor = 0xfff4be65.toInt(), appearance = Appearance(theme = config.appearance.theme)), sample, 96, 96) }
                                 Image(bitmap.asImageBitmap(), "${kind.label}, ${if (day) "day" else "night"}", filterQuality = FilterQuality.None, modifier = Modifier.size(52.dp))
                             }
                             Text(kind.label, fontSize = 12.sp, modifier = Modifier.padding(start = 8.dp))
@@ -395,18 +421,18 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-@Composable private fun Label(text: String) { Text(text, color = Muted, fontSize = 12.sp) }
-@Composable private fun ChoiceRow(labels: List<String>, selected: Int, onSelect: (Int) -> Unit) {
+@Composable internal fun Label(text: String) { Text(text, color = Muted, fontSize = 12.sp) }
+@Composable internal fun ChoiceRow(labels: List<String>, selected: Int, onSelect: (Int) -> Unit) {
     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
         labels.forEachIndexed { i, label -> FilterChip(selected = selected == i, onClick = { onSelect(i) }, label = { Text(label, fontSize = 12.sp) }) }
     }
 }
-@Composable private fun Toggle(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+@Composable internal fun Toggle(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
         Text(label, fontSize = 14.sp, modifier = Modifier.weight(1f)); Switch(checked, onCheckedChange = onChange)
     }
 }
-@Composable private fun Palette(label: String, selected: Int, onSelect: (Int) -> Unit) {
+@Composable internal fun Palette(label: String, selected: Int, onSelect: (Int) -> Unit) {
     val colors = listOf(0xfff0ebde, 0xffffffff, 0xfff4be65, 0xff99d5bc, 0xffa6bdff, 0xffed9ab4, 0xff11151d).map { it.toInt() }
     var showCustom by remember { mutableStateOf(false) }
     var hex by remember { mutableStateOf("") }

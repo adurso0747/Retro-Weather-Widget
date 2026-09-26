@@ -3,52 +3,133 @@ package com.retroweather.art
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
 import com.retroweather.data.*
 import kotlin.math.min
+import kotlin.math.roundToInt
 
+/** All visible art cells have integer bounds and a single color, including gradient cells. */
 object PixelRenderer {
     fun render(config: WidgetConfig, weather: Weather?, width: Int, height: Int): Bitmap {
         val bitmap = Bitmap.createBitmap(width.coerceIn(32, 1200), height.coerceIn(32, 800), Bitmap.Config.ARGB_8888)
         bitmap.density = Bitmap.DENSITY_NONE
         val canvas = Canvas(bitmap)
-        canvas.drawColor(config.backgroundColor)
         val paint = Paint().apply { isAntiAlias = false; isFilterBitmap = false }
+        val a = config.appearance
+        val hasBackground = config.backgroundColor != 0 && a.background.opacity > 0
+        if (hasBackground) {
+            // Background gradients are sampled in square cells to preserve the pixel style.
+            for (y in 0 until bitmap.height step 4) for (x in 0 until bitmap.width step 4) {
+                paint.color = colorAt(config.backgroundColor, a.background, x.toFloat() / bitmap.width, y.toFloat() / bitmap.height)
+                canvas.drawRect(x.toFloat(), y.toFloat(), (x + 4).toFloat(), (y + 4).toFloat(), paint)
+            }
+        }
         val temperature = weather?.temperature(config.fahrenheit) ?: "--°${if (config.fahrenheit) "F" else "C"}"
-        val iconSize = if (config.showIcon) 32 else 0
-        val gap = if (config.showIcon && config.showTemperature) 4 else 0
+        var iconScale = a.iconScale.coerceIn(1, 3)
+        var textScale = a.textScale.coerceIn(1, 4)
+        var ip = a.iconPadding.coerceIn(0, 8)
+        var tp = a.textPadding.coerceIn(0, 8)
+        var showIcon = config.showIcon
+        val showText = config.showTemperature
         val horizontal = config.layout == Layout.LEFT || config.layout == Layout.RIGHT
-        val fontScale = if (bitmap.width - 8 >= (if (horizontal) iconSize + gap else 0) + temperature.length * 12 && bitmap.height - 8 >= (if (horizontal) 32 else iconSize + gap + 14)) 2 else 1
-        val textHeight = 7 * fontScale
-        val textWidth = if (config.showTemperature) (temperature.length * 6 - 1) * fontScale else 0
-        val logicalWidth = if (horizontal) iconSize + gap + textWidth else maxOf(iconSize, textWidth)
-        val logicalHeight = if (horizontal) maxOf(iconSize, if (config.showTemperature) textHeight else 0)
-            else iconSize + gap + if (config.showTemperature) textHeight else 0
-        val availableW = (bitmap.width - 8).coerceAtLeast(1)
-        val availableH = (bitmap.height - 8).coerceAtLeast(1)
-        val factor = (min(availableW.toFloat() / logicalWidth.coerceAtLeast(1), availableH.toFloat() / logicalHeight.coerceAtLeast(1)) * config.scale).toInt().coerceAtLeast(1)
-        val startX = (bitmap.width - logicalWidth * factor) / 2
-        val startY = (bitmap.height - logicalHeight * factor) / 2
-        fun pixel(x: Int, y: Int, color: Int) {
-            paint.color = color
-            canvas.drawRect((startX + x * factor).toFloat(), (startY + y * factor).toFloat(),
-                (startX + (x + 1) * factor).toFloat(), (startY + (y + 1) * factor).toFloat(), paint)
+        // On small widgets reduce requested sizes before giving up content. Never crop glyphs.
+        val outer = a.outerPadding.coerceIn(0, min(bitmap.width, bitmap.height) / 6)
+        val availableW = bitmap.width - outer * 2
+        val availableH = bitmap.height - outer * 2
+        val rim = if (a.outlines) 1 else 0
+        fun sizes(): IntArray {
+            val iw = if (showIcon) 32 * iconScale + ip * 2 else 0
+            val tw = if (showText) (temperature.length * 6 - 1) * textScale + tp * 2 else 0
+            val th = if (showText) 7 * textScale + tp * 2 else 0
+            val gap = if (showIcon && showText) 4 else 0
+            return intArrayOf(iw, tw, th, gap, (if (horizontal) iw + tw + gap else maxOf(iw, tw)) + rim * 2,
+                (if (horizontal) maxOf(iw, th) else iw + th + gap) + rim * 2)
         }
-        val iconX = if (horizontal) { if (config.layout == Layout.RIGHT && config.showTemperature) textWidth + gap else 0 } else (logicalWidth - iconSize) / 2
-        val iconY = if (horizontal) 0 else if (config.layout == Layout.BOTTOM && config.showTemperature) textHeight + gap else 0
-        if (config.showIcon) PixelArt.sprite(weather?.kind ?: WeatherKind.UNKNOWN, weather?.isDay ?: true)
-            .forEachIndexed { y, row -> row.forEachIndexed { x, on -> if (on) pixel(iconX + x, iconY + y, config.iconColor) } }
-        val textX = if (horizontal) { if (config.layout == Layout.LEFT) iconSize + gap else 0 } else (logicalWidth - textWidth) / 2
-        val textY = if (horizontal) (logicalHeight - textHeight) / 2 else if (config.layout == Layout.TOP) iconSize + gap else 0
-        if (config.showTemperature) temperature.forEachIndexed { i, char ->
-            PixelArt.glyphs.getValue(char).forEachIndexed { y, row -> row.forEachIndexed { x, c ->
-                if (c == '1') for (dy in 0 until fontScale) for (dx in 0 until fontScale)
-                    pixel(textX + (i * 6 + x) * fontScale + dx, textY + y * fontScale + dy, config.textColor)
-            } }
+        var size = sizes()
+        while ((size[4] > availableW || size[5] > availableH) && (iconScale > 1 || textScale > 1 || ip > 0 || tp > 0)) {
+            if (iconScale > 1) iconScale--
+            if (textScale > 1) textScale--
+            ip = 0; tp = 0
+            size = sizes()
         }
+        if ((size[4] > availableW || size[5] > availableH) && showIcon && showText) {
+            // A very narrow host displays the temperature until it is enlarged.
+            showIcon = false
+            size = sizes()
+        }
+        val iw = size[0]; val tw = size[1]; val th = size[2]; val gap = size[3]
+        val logicalW = size[4]; val logicalH = size[5]
+        val fit = min(availableW.toFloat() / logicalW.coerceAtLeast(1), availableH.toFloat() / logicalH.coerceAtLeast(1))
+        val factor = if (a.dynamicSizing) (fit * config.scale).toInt().coerceAtLeast(1)
+            else a.fixedPixelSize.coerceIn(1, fit.toInt().coerceAtLeast(1))
+        val startX = outer + a.horizontal.offset(availableW - logicalW * factor)
+        val startY = outer + a.vertical.offset(availableH - logicalH * factor)
+        val innerW = logicalW - rim * 2
+        val innerH = logicalH - rim * 2
+        val iconX = rim + ip + if (horizontal) { if (config.layout == Layout.RIGHT) tw + gap else 0 } else a.iconHorizontal.offset(innerW - iw)
+        val iconY = rim + ip + if (horizontal) a.iconVertical.offset(innerH - iw) else if (config.layout == Layout.BOTTOM) th + gap else 0
+        val textX = rim + tp + if (horizontal) { if (config.layout == Layout.LEFT && showIcon) iw + gap else 0 } else a.textHorizontal.offset(innerW - tw)
+        val textY = rim + tp + if (horizontal) a.textVertical.offset(innerH - th) else if (config.layout == Layout.TOP && showIcon) iw + gap else 0
+        val icons = mutableSetOf<Pair<Int, Int>>()
+        val letters = mutableSetOf<Pair<Int, Int>>()
+        if (showIcon) PixelArt.sprite(weather?.kind ?: WeatherKind.UNKNOWN, weather?.isDay ?: true, a.theme)
+            .forEachIndexed { y, row -> row.forEachIndexed { x, on -> if (on) {
+                for (dy in 0 until iconScale) for (dx in 0 until iconScale) icons.add(iconX + x * iconScale + dx to iconY + y * iconScale + dy)
+            } } }
+        if (showText) temperature.forEachIndexed { i, char ->
+            PixelArt.glyphs.getValue(char).forEachIndexed { y, row -> row.forEachIndexed { x, c -> if (c == '1') {
+                for (dy in 0 until textScale) for (dx in 0 until textScale) letters.add(textX + (i * 6 + x) * textScale + dx to textY + y * textScale + dy)
+            } } }
+        }
+        fun drawCell(x: Int, y: Int) = canvas.drawRect((startX + x * factor).toFloat(), (startY + y * factor).toFloat(),
+            (startX + (x + 1) * factor).toFloat(), (startY + (y + 1) * factor).toFloat(), paint)
+        if (a.outlines) {
+            val all = icons + letters
+            val border = mutableSetOf<Pair<Int, Int>>()
+            all.forEach { (x, y) -> for (dy in -1..1) for (dx in -1..1) if ((x + dx to y + dy) !in all) border.add(x + dx to y + dy) }
+            paint.color = a.outlineColor
+            border.forEach { (x, y) -> drawCell(x, y) }
+        }
+        // Invalid persisted cutout settings use normal content instead of an invisible widget.
+        if (a.cutout && (hasBackground || a.outlines)) paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
+        fun content(cells: Set<Pair<Int, Int>>, base: Int, treatment: ColorTreatment) {
+            if (cells.isEmpty()) return
+            val minX = cells.minOf { it.first }; val minY = cells.minOf { it.second }
+            val spanX = (cells.maxOf { it.first } - minX).coerceAtLeast(1)
+            val spanY = (cells.maxOf { it.second } - minY).coerceAtLeast(1)
+            cells.forEach { (x, y) ->
+                paint.color = colorAt(base, treatment, (x - minX).toFloat() / spanX, (y - minY).toFloat() / spanY)
+                drawCell(x, y)
+            }
+        }
+        content(icons, config.iconColor, a.icon)
+        content(letters, config.textColor, a.text)
+        paint.xfermode = null
         if (weather?.stale() == true) {
             paint.color = 0xffffbd66.toInt()
             canvas.drawRect((bitmap.width - 8).toFloat(), 3f, (bitmap.width - 3).toFloat(), 8f, paint)
         }
         return bitmap
+    }
+
+    private fun colorAt(base: Int, treatment: ColorTreatment, x: Float, y: Float): Int {
+        val last = minOf(treatment.stops.size, 3)
+        fun color(index: Int) = if (index == 0) base else treatment.stops[index - 1]
+        val progress = when (treatment.direction) {
+            GradientDirection.HORIZONTAL -> x
+            GradientDirection.VERTICAL -> y
+            GradientDirection.DIAGONAL -> (x + y) / 2
+        }.coerceIn(0f, 1f) * last
+        val i = progress.toInt().coerceAtMost(last)
+        val j = minOf(i + 1, last)
+        val mix = progress - i
+        fun channel(shift: Int): Int {
+            val start = (color(i) ushr shift) and 255
+            val end = (color(j) ushr shift) and 255
+            return (start + (end - start) * mix).roundToInt()
+        }
+        val alpha = (channel(24) * treatment.opacity.coerceIn(0, 100) / 100f).roundToInt()
+        return (alpha shl 24) or (channel(16) shl 16) or (channel(8) shl 8) or channel(0)
     }
 }
