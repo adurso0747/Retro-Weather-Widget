@@ -45,11 +45,10 @@ class DeviceSmokeTests {
         val store = AppStore(context)
         store.saveDynamic(Place("Saved position", 40.71, -74.01), System.currentTimeMillis() - 86_400_000)
         // Fresh installs have no location grant. Don't revoke mid-instrumentation, which kills the process.
-        if (!DeviceLocation(context, store).foregroundAllowed()) {
-            val result = DeviceLocation(context, store).resolve(true)
-            assertEquals("40.71,-74.01", result.place?.key)
-            assertTrue(result.message.contains("permission"))
-        }
+        assumeTrue("Run this case on a fresh install before the GPS permission test", !DeviceLocation(context, store).foregroundAllowed())
+        val result = DeviceLocation(context, store).resolve(true)
+        assertEquals("40.71,-74.01", result.place?.key)
+        assertTrue(result.message.contains("permission"))
     }
 
     @Suppress("DEPRECATION", "MissingPermission")
@@ -84,7 +83,7 @@ class DeviceSmokeTests {
         store.saveWeather(WeatherApi().current(place))
         store.saveConfig(0, WidgetConfig(place = place, shortcutPackage = "com.android.settings", shortcutLabel = "Settings"))
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
-        assertTrue(device.wait(Until.hasObject(By.text("Your sky, in pixels.")), 10_000))
+        assertTrue(device.wait(Until.hasObject(By.text("Configuration")), 10_000))
         repeat(16) {
             if (!device.hasObject(By.text("Add to home screen"))) {
                 // Use the outside gutter so gestures cannot be intercepted by color/layout carousels.

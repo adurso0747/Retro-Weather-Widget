@@ -68,7 +68,9 @@ class WeatherWidget : AppWidgetProvider() {
                 "${it.kind.label}, ${it.temperature(config.fahrenheit)}. ${store.resolved(config)?.name}. ${if (it.stale()) "Saved weather is over two hours old." else ""} ${store.status(id)}"
             } ?: message)
             val intent = Intent(context, MainActivity::class.java).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
-                .putExtra("widgetTap", message.isBlank()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                // Recreate this standard activity even when its task is already in recents,
+                // so each tap processes the selected widget's current shortcut.
+                .putExtra("widgetTap", message.isBlank()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             views.setOnClickPendingIntent(R.id.widget_root, PendingIntent.getActivity(context, id, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
             manager.updateAppWidget(id, views)
         }

@@ -3,6 +3,8 @@
 ## Artwork and presentation
 
 - Original weather art is built from explicit pixels on a 32×32 grid, not generated pictures.
+- Outline artwork follows the supplied references: round sun and crescent, overlapping clouds, diagonal rain, stepped lightning, and horizontal fog bars.
+- Setup uses functional labels without promotional slogans.
 - All documented Open-Meteo WMO codes and WeatherAPI current condition codes map to a weather family; unknown codes have a neutral fallback.
 - Clear and partly cloudy states have day/night variants; drizzle, rain, freezing precipitation, snow, showers, thunderstorms, hail, fog, and overcast are represented.
 - Preview and widget use the same pixel renderer. Resizing preserves whole pixel blocks.

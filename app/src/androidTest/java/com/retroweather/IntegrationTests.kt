@@ -116,14 +116,15 @@ class IntegrationTests {
         store.saveWeather(fresh())
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
         val device = UiDevice.getInstance(instrumentation)
-        assertTrue(device.wait(Until.hasObject(By.text("Your sky, in pixels.")), 10_000))
+        assertTrue(device.wait(Until.hasObject(By.text("Configuration")), 10_000))
         device.waitForIdle()
         device.takeScreenshot(File(context.getExternalFilesDir(null), "configuration.png"))
         export("configuration.png")
         // Scroll the real Compose screen and inspect first-release shortcut controls.
         repeat(12) {
             if (!device.hasObject(By.text("Choose app"))) {
-                device.findObject(By.scrollable(true))?.scroll(Direction.DOWN, .65f)
+                // Avoid the horizontal carousels and widget selector inside the vertical screen.
+                device.swipe(24, device.displayHeight * 4 / 5, 24, device.displayHeight / 4, 35)
                 device.waitForIdle()
             }
         }

@@ -199,13 +199,10 @@ class MainActivity : ComponentActivity() {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("RW", color = Amber, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Black, fontSize = 26.sp)
                 Spacer(Modifier.width(12.dp))
-                Column { Text("RETRO WEATHER", fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-                    Text("A little weather. A lot of pixels.", color = Muted, fontSize = 12.sp) }
+                Text("RETRO WEATHER", fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
             }
             Spacer(Modifier.height(26.dp))
-            Text("Your sky, in pixels.", fontSize = 30.sp, fontWeight = FontWeight.Bold, letterSpacing = (-1).sp)
-            Spacer(Modifier.height(6.dp))
-            Text("Make a small space for the world outside.", color = Muted, fontSize = 14.sp)
+            Text("Configuration", fontSize = 30.sp, fontWeight = FontWeight.Bold, letterSpacing = (-1).sp)
             Spacer(Modifier.height(22.dp))
             Card(colors = CardDefaults.cardColors(containerColor = Color(0xff080c13)), shape = RoundedCornerShape(22.dp)) {
                 Row(Modifier.fillMaxWidth().padding(18.dp), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -234,7 +231,7 @@ class MainActivity : ComponentActivity() {
                     message = ""
                 }
             }
-            Section("01 / LOCATION", "Where's your weather?") {
+            Section("01 / SETUP", "Location") {
                 ChoiceRow(listOf("Fixed location", "Follow device"), if (config.dynamic) 1 else 0) { change(config.copy(dynamic = it == 1)); message = "" }
                 if (config.dynamic) {
                     Text("Uses GPS or network location. Approximate location is enough. Coordinates are sent to your weather provider.", color = Muted, fontSize = 13.sp)
@@ -254,7 +251,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-            Section("02 / APPEARANCE", "Make it yours") {
+            Section("02 / STYLE", "Appearance") {
                 Label("Temperature")
                 ChoiceRow(listOf("Fahrenheit  °F", "Celsius  °C"), if (config.fahrenheit) 0 else 1) { change(config.copy(fahrenheit = it == 0)) }
                 Label("Icon position")
@@ -267,9 +264,9 @@ class MainActivity : ComponentActivity() {
                 Palette("Text color", config.textColor) { change(config.copy(textColor = it)) }
                 Toggle("Transparent background", config.backgroundColor == 0) { change(config.copy(backgroundColor = if (it) 0 else 0xff11151d.toInt())) }
                 if (config.backgroundColor != 0) Palette("Background color", config.backgroundColor) { change(config.copy(backgroundColor = it)) }
-                TextButton(onClick = { dialog = "gallery" }) { Text("Explore the pixel artwork →") }
+                TextButton(onClick = { dialog = "gallery" }) { Text("Weather icons") }
             }
-            Section("03 / TAP SHORTCUT", "One tap, your favorite app") {
+            Section("03 / ACTION", "Tap shortcut") {
                 Text(config.shortcutLabel, color = Mint, fontWeight = FontWeight.Bold)
                 Text("Tapping this widget opens the app you choose. You can always edit widgets here in Retro Weather.", color = Muted, fontSize = 13.sp)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -286,7 +283,7 @@ class MainActivity : ComponentActivity() {
                     if (config.shortcutPackage.isNotBlank()) TextButton(onClick = { change(config.copy(shortcutPackage = "", shortcutLabel = "Retro Weather")) }) { Text("Clear") }
                 }
             }
-            Section("04 / WEATHER SERVICE", "Free, with a backup plan") {
+            Section("04 / DATA", "Weather providers") {
                 Text("Open-Meteo", fontWeight = FontWeight.Bold, color = Mint)
                 Text("Refreshes about every 30 minutes while widgets are active. Android may delay updates to save battery. Saved weather stays available offline; an amber corner dot means data is over two hours old.", color = Muted, fontSize = 13.sp)
                 HorizontalDivider(color = Color(0xff35404f))
@@ -300,7 +297,7 @@ class MainActivity : ComponentActivity() {
             }
             Button(onClick = { save() }, modifier = Modifier.fillMaxWidth().height(54.dp), shape = RoundedCornerShape(16.dp)) { Text("Save widget", fontWeight = FontWeight.Bold, fontSize = 16.sp) }
             if (intent.action != AppWidgetManager.ACTION_APPWIDGET_CONFIGURE) OutlinedButton(onClick = { pin() }, modifier = Modifier.fillMaxWidth().padding(top = 10.dp).height(50.dp)) { Text("Add to home screen") }
-            Text("HAND-PLACED PIXELS  /  BUILT FOR YOUR SKY", color = Muted, fontSize = 10.sp, fontFamily = FontFamily.Monospace, modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = 26.dp))
+            Spacer(Modifier.height(26.dp))
         }
 
         when (dialog) {
@@ -350,7 +347,7 @@ class MainActivity : ComponentActivity() {
             }, confirmButton = { TextButton(onClick = { dialog = "" }) { Text("Cancel") } })
             "key" -> AlertDialog(onDismissRequest = { keyInput = ""; dialog = "" }, title = { Text("Fallback API key") }, text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Create a free account at WeatherAPI.com, then paste its API key. It is encrypted on this device and never added to the repository.")
+                    Text("Create a free account at WeatherAPI.com, then paste its API key. The key is encrypted and stored on this device.")
                     OutlinedTextField(keyInput, { keyInput = it }, label = { Text("API key") }, singleLine = true, visualTransformation = PasswordVisualTransformation())
                     TextButton(onClick = { openUrl("https://www.weatherapi.com/signup.aspx") }) { Text("Get a free key ↗") }
                 }
@@ -358,7 +355,7 @@ class MainActivity : ComponentActivity() {
                 runCatching { store.saveFallbackKey(keyInput) }.onSuccess { keyPresent = true; message = "Fallback key saved. It will be used when Open-Meteo is unavailable." }.onFailure { message = "Couldn't securely store the key. Please try again." }
                 keyInput = ""; dialog = ""
             }) { Text("Save key") } }, dismissButton = { TextButton(onClick = { keyInput = ""; dialog = "" }) { Text("Cancel") } })
-            "about" -> AlertDialog(onDismissRequest = { dialog = "" }, title = { Text("Weather, with respect") }, text = {
+            "about" -> AlertDialog(onDismissRequest = { dialog = "" }, title = { Text("Data sources & privacy") }, text = {
                 Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Weather data by Open-Meteo, licensed CC BY 4.0. Values are rounded and condition codes are translated into original pixel artwork. Optional fallback data by WeatherAPI.com.")
                     Text("Only the latest device position and up to 20 recent weather cache entries are kept locally. No travel log, analytics, ads, or account is built into this app. Android backup is disabled. Uninstalling removes local settings.")
@@ -369,7 +366,7 @@ class MainActivity : ComponentActivity() {
                     TextButton(onClick = { openUrl("https://www.weatherapi.com/privacy.aspx") }) { Text("WeatherAPI.com privacy ↗") }
                 }
             }, confirmButton = { TextButton(onClick = { dialog = "" }) { Text("Done") } })
-            "gallery" -> AlertDialog(onDismissRequest = { dialog = "" }, title = { Text("Every pixel has a place") }, text = {
+            "gallery" -> AlertDialog(onDismissRequest = { dialog = "" }, title = { Text("Weather icons") }, text = {
                 Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Original 32 × 32 grids. Day and night variants below.", color = Muted)
                     WeatherKind.entries.forEach { kind ->
