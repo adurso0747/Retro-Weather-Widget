@@ -1,5 +1,7 @@
 package com.retroweather
 
+import androidx.compose.ui.platform.testTag
+
 import android.Manifest
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -204,7 +206,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }) { insets ->
-        Column(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)) {
+        Column(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets).testTag("configuration-scroll").verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)) {
             Spacer(Modifier.height(22.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("RW", color = Amber, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Black, fontSize = 26.sp)
@@ -279,7 +281,7 @@ class MainActivity : ComponentActivity() {
                 Toggle("Temperature", config.showTemperature) { if (it || config.showIcon) change(config.copy(showTemperature = it)) }
                 Label("Scale · ${(config.scale * 100).toInt()}%")
                 Slider(config.scale, onValueChange = { change(config.copy(scale = it)) }, valueRange = 0.4f..1f, steps = 5)
-                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick = { dialog = "icon-style" }) { Text("Icon settings") }
                     OutlinedButton(onClick = { dialog = "text-style" }) { Text("Text settings") }
                     OutlinedButton(onClick = { dialog = "base-style" }) { Text("Background") }

@@ -63,4 +63,6 @@ The five user requirements and configurable app shortcut are mandatory. See [scr
 - Kotlin source and reproducible Gradle wrapper in the repository.
 - Buildable debug APK; unit and instrumented tests; Android lint without errors.
 - README includes setup, permissions, provider terms, privacy, build steps, and limitations.
+- GitHub Actions builds the APK and runs unit tests, lint and deterministic emulator tests; debug APK and reports are available as workflow artifacts after a successful run.
+- Live-provider and launcher smoke tests are documented separately and do not require secrets in routine CI.
 - Physical-device battery/launcher validation remains a release sign-off task, not something an emulator can establish.

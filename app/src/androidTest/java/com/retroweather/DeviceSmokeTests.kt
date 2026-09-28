@@ -19,6 +19,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Assume.assumeTrue
 import org.junit.Before
+import org.junit.FixMethodOrder
+import org.junit.runners.MethodSorters
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
@@ -26,6 +28,7 @@ import java.util.regex.Pattern
 
 /** Opt-in tests make real network requests and add a widget to the emulator launcher. */
 @RunWith(AndroidJUnit4::class)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class DeviceSmokeTests {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context get() = instrumentation.targetContext

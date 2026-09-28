@@ -12,6 +12,12 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Default device tests are deterministic and need no external API or launcher.
+        if (providers.gradleProperty("liveWeatherTests").orNull == "true") {
+            testInstrumentationRunnerArguments["liveNetwork"] = "true"
+        } else {
+            testInstrumentationRunnerArguments["notClass"] = "com.retroweather.DeviceSmokeTests"
+        }
     }
     buildFeatures { compose = true }
     compileOptions {
@@ -31,7 +37,11 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
-    androidTestImplementation("androidx.test:runner:1.6.2")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
+    androidTestImplementation(platform("androidx.compose:compose-bom:2026.02.01"))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    // Android 17 removed the reflective InputManager accessor used by older Espresso.
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
 }
