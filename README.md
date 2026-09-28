@@ -1,10 +1,16 @@
+<p align="center">
+  <img src="docs/images/RetroWeather/app-icon.png" width="128" height="128" alt="Retro Weather app icon">
+</p>
+
 # Retro Weather
 
 [![Android build](https://github.com/adurso0747/Retro-Weather-Widget/actions/workflows/android.yml/badge.svg)](https://github.com/adurso0747/Retro-Weather-Widget/actions/workflows/android.yml)
+[![Version 0.1.0 unreleased](https://img.shields.io/badge/version-0.1.0%20%28unreleased%29-orange)](CHANGELOG.md)
+[![Kotlin 2.2.10](https://img.shields.io/badge/Kotlin-2.2.10-7F52FF?logo=kotlin&logoColor=white)](build.gradle.kts)
+[![License MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Android 8.0 and newer](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)](app/build.gradle.kts)
 
 A native Kotlin Android home-screen widget with original pixel artwork, fixed or device location, free weather data, and a configurable app shortcut.
-
-![Widget appearance examples](docs/images/RetroWeather/appearance-examples.png)
 
 - Original outline and solid weather icons, with day/night variants.
 - Location search, coordinates or device location; current weather updates approximately every 30 minutes.
@@ -12,15 +18,40 @@ A native Kotlin Android home-screen widget with original pixel artwork, fixed or
 - Transparent backgrounds, contrast outlines and cutout effects.
 - Separate settings and app shortcut for each widget.
 
+## Screenshots
+
+Configuration and icon editor, captured from the Android app with sample weather:
+
+<p>
+  <img src="docs/images/RetroWeather/configuration.png" width="300" alt="Retro Weather configuration screen with pixel weather preview and location setup">
+  <img src="docs/images/RetroWeather/icon-settings.png" width="300" alt="Icon editor showing solid pixel artwork, size, padding and alignment settings">
+</p>
+
+Appearance examples from the same renderer used by the home-screen widget:
+
+![Widget appearance examples](docs/images/RetroWeather/appearance-examples.png)
+
 ## Try it
 
 Build the debug APK below, or download the APK artifact from a successful [Android workflow run](https://github.com/adurso0747/Retro-Weather-Widget/actions/workflows/android.yml). CI artifacts become available after the workflow is committed and pushed. There is no published signed release yet.
+
+**Current development version: 0.1.0** (`versionCode = 1`). See the [changelog](CHANGELOG.md) and [GitHub Releases](https://github.com/adurso0747/Retro-Weather-Widget/releases). The version badge identifies the code in this repository; it does not imply a published release.
 
 See [setup](#set-up), [development and tests](CONTRIBUTING.md), [acceptance criteria](docs/ACCEPTANCE.md), [screenshot review](docs/SCREENSHOT_REVIEW.md), and [verification results](docs/VERIFICATION.md).
 
 ## Build
 
-The project uses Android Gradle Plugin 9.4.1 (built-in Kotlin), Gradle 9.6.0, Compose, and Android SDK 37. Minimum Android version: 8.0 / API 26. Build with JDK 21 or a compatible JDK 17+ installation.
+| Component | Version |
+| --- | --- |
+| Kotlin / Compose compiler plugin | 2.2.10 |
+| Android Gradle Plugin | 9.4.1, with built-in Kotlin |
+| Gradle wrapper | 9.6.0 |
+| Compose BOM | 2026.02.01 |
+| Compile / target SDK | 37 |
+| Minimum Android | 8.0 / API 26 |
+| JDK used locally and in CI | 21 |
+
+Kotlin 2.2.10 is confirmed by the resolved Gradle plugin dependency graph. The app's resolved Kotlin standard library and the explicitly configured Compose compiler plugin use the same version.
 
 On the configured Windows machine:
 
@@ -101,3 +132,11 @@ The optional API key is encrypted with AES-GCM using an Android Keystore key. It
 See [acceptance criteria](docs/ACCEPTANCE.md), the [screenshot-by-screenshot review](docs/SCREENSHOT_REVIEW.md), and [verification notes](docs/VERIFICATION.md). Gradients, solid icons, opacity, independent sizing/alignment, outlines and cutout are implemented. Forecasts, animation, custom text templates, explicit locale/timezone controls, background scenes, global overlays, recent colors and app deep links remain unfinished.
 
 Data attribution: Open-Meteo, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Temperatures are rounded and condition codes mapped to original artwork. Optional fallback data by WeatherAPI.com. Third-party software remains under its respective licenses.
+
+## Contributing and issues
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, test commands and review expectations. Report bugs or request features through [GitHub Issues](https://github.com/adurso0747/Retro-Weather-Widget/issues). For widget issues, include Android version, launcher, reproduction steps and a screenshot; omit API keys and private coordinates.
+
+## License
+
+Source code and original artwork are available under the [MIT License](LICENSE). Copyright © 2026 Retro Weather contributors. Weather data and third-party dependencies retain their own licenses and service terms; the MIT license does not replace those terms.
