@@ -4,8 +4,8 @@
 
 # Retro Weather
 
-[![Android build](https://github.com/adurso0747/Retro-Weather-Widget/actions/workflows/android.yml/badge.svg)](https://github.com/adurso0747/Retro-Weather-Widget/actions/workflows/android.yml)
-[![Version 0.1.0 unreleased](https://img.shields.io/badge/version-0.1.0%20%28unreleased%29-orange)](CHANGELOG.md)
+[![Android CI](https://github.com/adurso0747/Retro-Weather-Widget/actions/workflows/android.yml/badge.svg?branch=main)](https://github.com/adurso0747/Retro-Weather-Widget/actions)
+[![Version 0.1.0](https://img.shields.io/badge/version-0.1.0-blue)](app/build.gradle.kts)
 [![Kotlin 2.2.10](https://img.shields.io/badge/Kotlin-2.2.10-7F52FF?logo=kotlin&logoColor=white)](build.gradle.kts)
 [![License MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Android 8.0 and newer](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)](app/build.gradle.kts)
@@ -27,15 +27,11 @@ Configuration and icon editor, captured from the Android app with sample weather
   <img src="docs/images/RetroWeather/icon-settings.png" width="300" alt="Icon editor showing solid pixel artwork, size, padding and alignment settings">
 </p>
 
-Appearance examples from the same renderer used by the home-screen widget:
-
-![Widget appearance examples](docs/images/RetroWeather/appearance-examples.png)
-
 ## Try it
 
-Build the debug APK below, or download the APK artifact from a successful [Android workflow run](https://github.com/adurso0747/Retro-Weather-Widget/actions/workflows/android.yml). CI artifacts become available after the workflow is committed and pushed. There is no published signed release yet.
+Build the APK using the instructions below. Once the Android CI workflow has run successfully, its debug APK is available from [GitHub Actions](https://github.com/adurso0747/Retro-Weather-Widget/actions): open the run and download the `retro-weather-debug` artifact.
 
-**Current development version: 0.1.0** (`versionCode = 1`). See the [changelog](CHANGELOG.md) and [GitHub Releases](https://github.com/adurso0747/Retro-Weather-Widget/releases). The version badge identifies the code in this repository; it does not imply a published release.
+**App version: 0.1.0** (`versionCode = 1`). See the [changelog](CHANGELOG.md). Build artifacts are debug-signed APKs; no GitHub Release has been published yet.
 
 See [setup](#set-up), [development and tests](CONTRIBUTING.md), [acceptance criteria](docs/ACCEPTANCE.md), [screenshot review](docs/SCREENSHOT_REVIEW.md), and [verification results](docs/VERIFICATION.md).
 
