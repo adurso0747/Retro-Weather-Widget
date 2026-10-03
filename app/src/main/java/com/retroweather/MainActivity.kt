@@ -278,7 +278,10 @@ class MainActivity : ComponentActivity() {
                 Label("Icon theme")
                 ChoiceRow(IconTheme.entries.map { it.label }, config.appearance.theme.ordinal) { changeAppearance(config.appearance.copy(theme = IconTheme.entries[it])) }
                 Toggle("Weather icon", config.showIcon) { if (it || config.showTemperature) change(config.copy(showIcon = it)) }
-                Toggle("Temperature", config.showTemperature) { if (it || config.showIcon) change(config.copy(showTemperature = it)) }
+                Toggle("Widget text", config.showTemperature) { if (it || config.showIcon) change(config.copy(showTemperature = it)) }
+                TextButton(onClick = { dialog = "text-template" }) { Text("Edit widget text") }
+                Toggle("Weather description", config.showCondition) { change(config.copy(showCondition = it)) }
+                Text("Shows the condition beneath the icon. Small widgets may omit it to keep the main content readable.", color = Muted, fontSize = 12.sp)
                 Label("Scale · ${(config.scale * 100).toInt()}%")
                 Slider(config.scale, onValueChange = { change(config.copy(scale = it)) }, valueRange = 0.4f..1f, steps = 5)
                 FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -326,6 +329,7 @@ class MainActivity : ComponentActivity() {
         }
 
         when (dialog) {
+            "text-template" -> TextEditor(config, weather, onApply = { change(config.copy(textTemplate = it)); dialog = "" }, onDismiss = { dialog = "" })
             "icon-style", "text-style", "base-style", "dimensions", "effects" ->
                 AppearanceEditor(dialog, config, weather, onChange = { change(it) }, onDismiss = { dialog = "" })
             "search" -> AlertDialog(onDismissRequest = { dialog = "" }, title = { Text("Find your location") }, text = {

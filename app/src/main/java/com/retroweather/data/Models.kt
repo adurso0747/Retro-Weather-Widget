@@ -71,13 +71,16 @@ data class WidgetConfig(
     val scale: Float = 0.85f,
     val shortcutPackage: String = "",
     val shortcutLabel: String = "Retro Weather",
-    val appearance: Appearance = Appearance()
+    val appearance: Appearance = Appearance(),
+    val textTemplate: String = WidgetText.DEFAULT,
+    val showCondition: Boolean = false
 ) {
     fun json(): JSONObject = JSONObject().put("dynamic", dynamic).put("place", place?.json())
         .put("fahrenheit", fahrenheit).put("layout", layout.name).put("iconColor", iconColor)
         .put("textColor", textColor).put("backgroundColor", backgroundColor).put("showIcon", showIcon)
         .put("showTemperature", showTemperature).put("scale", scale.toDouble())
         .put("shortcutPackage", shortcutPackage).put("shortcutLabel", shortcutLabel).put("appearance", appearance.json())
+        .put("textTemplate", textTemplate).put("showCondition", showCondition)
     companion object {
         fun from(j: JSONObject) = WidgetConfig(
             j.optBoolean("dynamic"), j.optJSONObject("place")?.let(Place::from), j.optBoolean("fahrenheit", true),
@@ -85,7 +88,9 @@ data class WidgetConfig(
             j.optInt("iconColor", -1), j.optInt("textColor", -1), j.optInt("backgroundColor", 0),
             j.optBoolean("showIcon", true), j.optBoolean("showTemperature", true),
             j.optDouble("scale", 0.85).toFloat().coerceIn(0.4f, 1f),
-            j.optString("shortcutPackage"), j.optString("shortcutLabel", "Retro Weather"), Appearance.from(j.optJSONObject("appearance"))
+            j.optString("shortcutPackage"), j.optString("shortcutLabel", "Retro Weather"), Appearance.from(j.optJSONObject("appearance")),
+            j.optString("textTemplate", WidgetText.DEFAULT).let { if (WidgetText.error(it) == null) it else WidgetText.DEFAULT },
+            j.optBoolean("showCondition")
         )
     }
 }

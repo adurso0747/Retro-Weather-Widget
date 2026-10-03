@@ -106,7 +106,23 @@ Open-Meteo data are model-based current conditions; switching providers can chan
 
 `art/PixelRenderer.kt` draws integer-aligned pixels onto an Android bitmap with antialiasing and bitmap filtering disabled. The preview and RemoteViews widget use the same renderer. The in-app gallery shows all weather families and day/night variants. Instrumented tests export a sprite sheet.
 
-## Structure
+## Widget text and weather descriptions
+
+Choose **Edit widget text** in Appearance to enter up to 160 characters and four lines. The editor previews the result, validates fields, and offers Cancel or Use text; **Save widget** persists the draft for that widget. Existing widgets retain their temperature-only text.
+
+Example:
+
+```text
+{temperature:unit}
+{condition}
+{location}
+```
+
+Available fields are `{temperature:unit}`, `{temperature}`, `{unit}`, `{condition}`, `{location}`, `{updated}` and `{date}`. Updated/date refer to the weather observation in the device timezone, using 24-hour time and YYYY-MM-DD. Follow device mode labels the location as “Current location”; fixed mode uses the selected place name. Missing readings use an unavailable marker rather than invented data.
+
+The hand-authored pixel font uses Latin capitals, numbers and common punctuation. Accents are simplified; unsupported characters appear as `?`. Long text wraps and ends with dots when space runs out. **Weather description** adds the condition beneath the icon independently of the main text. Very small widgets may omit the description or icon to retain the main text. Locale overrides and non-Latin font support remain open work.
+
+## Source structure
 
 - `MainActivity.kt`: Compose setup, live preview, location/appearance controls, shortcut app picker, API-key entry, attribution/privacy.
 - `AppearanceEditor.kt` and `data/Appearance.kt`: Detailed appearance controls, independent color treatments, and backwards-compatible settings.
@@ -125,7 +141,7 @@ The optional API key is encrypted with AES-GCM using an Android Keystore key. It
 
 ## Release scope and verification
 
-See [acceptance criteria](docs/ACCEPTANCE.md), the [screenshot-by-screenshot review](docs/SCREENSHOT_REVIEW.md), and [verification notes](docs/VERIFICATION.md). Gradients, solid icons, opacity, independent sizing/alignment, outlines and cutout are implemented. Forecasts, animation, custom text templates, explicit locale/timezone controls, background scenes, global overlays, recent colors and app deep links remain unfinished.
+See [acceptance criteria](docs/ACCEPTANCE.md), the [31-screenshot audit](docs/SCREENSHOT_REVIEW.md), and [verification notes](docs/VERIFICATION.md). Full screenshot feature parity is incomplete. Gradients, solid icons, opacity, independent sizing/alignment, outlines, cutout, editable current-weather text, visible condition descriptions and per-widget app shortcuts are implemented. Open work includes forecasts, locale/timezone selection, full unit presets, background scenes, animation, global overlays, gradient presets and recent colors. The audit records smaller control and validation gaps as well. App-specific deep links were not demonstrated in the screenshots and remain outside the original release scope.
 
 Data attribution: Open-Meteo, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Temperatures are rounded and condition codes mapped to original artwork. Optional fallback data by WeatherAPI.com. Third-party software remains under its respective licenses.
 

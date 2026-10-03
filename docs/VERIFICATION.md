@@ -1,5 +1,30 @@
 # Verification
 
+## October 2, 2026 — editable text and weather descriptions
+
+Implemented a per-widget template editor with validation, preview, reset, cancel and save; seven fields for current temperature/units, condition, location and observation date/time; optional condition text beneath the weather icon; hand-authored Latin pixel glyphs; bounded wrapping/overflow; and backwards-compatible settings defaults. No additional network requests or provider fields are needed.
+
+`assembleDebug testDebugUnitTest lintDebug connectedDebugAndroidTest` passed on the Pixel_9a API-37 emulator:
+
+| Check | Result |
+| --- | --- |
+| Debug APK | Built successfully |
+| JVM tests | 22 passed, no failures |
+| Default emulator tests | 14 passed, no failures |
+| Android lint | 0 errors, 28 warnings |
+
+New unit cases cover malformed/unknown/oversized templates, unit conversion, observation timezone/date boundaries, unavailable data, non-recursive substitution, settings migration/persistence, glyph coverage, wrapping and ellipsis. Device cases cover descriptions independently of main text, hidden icons, all four layouts at 32×32/160×80/640×320, invalid-template rejection, cancellation and per-widget editor persistence. The emulator uncovered an Android regex incompatibility missed by JVM tests; escaping both placeholder braces fixed it before the successful run.
+
+A subsequent focused editor test also passed after adding keyboard-dismissal coverage and exporting `text-editor.png` and `custom-text-example.png`. Both exports were visually reviewed: the editor's input/actions are visible and the rendered icon, description, temperature and location have crisp, readable pixels. This focused run replaces the connected report with one result; the 14-test count above belongs to the preceding full run. Local review copies are under `app/build/`, and device exports are in `/sdcard/Download/RetroWeather/`.
+
+The Latin font normalizes accents and substitutes `?` for unsupported characters. Dates use the device timezone; Follow device labels the location “Current location”. Very small widgets may omit secondary content. Forecasts, locale overrides, non-Latin text and the other open screenshot items remain unimplemented. This pass did not rerun live weather/GPS/shortcut smoke tests or physical-device battery tests.
+
+## October 2, 2026 — screenshot audit
+
+Compared all 31 supplied screenshots with setup UI, persisted models, data requests, pixel art/rendering, widget behavior and test assertions. See the [individual screenshot matrix](SCREENSHOT_REVIEW.md) and [open parity acceptance criteria](ACCEPTANCE.md#screenshot-parity-backlog). Full screenshot parity is incomplete. In particular, the current-only weather model and renderer do not implement forecasts, arbitrary text, visible subtext, timezone/locale controls or animation.
+
+The initial audit updated documentation only; the subsequent implementation and fresh build/device results are recorded above. Results dated September 25 and 27 below remain historical evidence. Source coverage is distinguished from executed device acceptance, and missing features have not been marked passed.
+
 ## September 27, 2026 — appearance and build automation
 
 The appearance work adds solid pixel masks, separate icon/text/background gradients and opacity, element sizing/padding/alignment, fixed or automatic sizing, contrast outlines and cutout rendering. Detailed editors share the widget renderer and save through the existing per-widget settings. The main Save and Add buttons remain visible while scrolling.

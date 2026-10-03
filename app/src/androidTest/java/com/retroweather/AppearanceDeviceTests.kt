@@ -111,6 +111,58 @@ class AppearanceDeviceTests {
         assertEquals(IconTheme.SOLID, store.config().appearance.theme)
         assertEquals(IconTheme.OUTLINE, store.config(8).appearance.theme)
     }
+    @Test fun customTextAndDescriptionRenderAcrossWidgetSizes() {
+        val base = WidgetConfig(place = place, showCondition = true, textTemplate = "{temperature:unit}\n{condition}\n{location}",
+            iconColor = Color.WHITE, textColor = Color.YELLOW, appearance = Appearance(dynamicSizing = false, fixedPixelSize = 1, outerPadding = 2))
+        for (layout in Layout.entries) for ((width, height) in listOf(32 to 32, 160 to 80, 640 to 320)) {
+            val bitmap = PixelRenderer.render(base.copy(layout = layout), weather(), width, height)
+            assertTrue("$layout $width x $height must retain main text", pixels(bitmap).any { it == Color.YELLOW })
+            // Main text must fit inside the actual bitmap, including the smallest supported size.
+            for (x in 0 until width) {
+                assertNotEquals(Color.YELLOW, bitmap.getPixel(x, 0))
+                assertNotEquals(Color.YELLOW, bitmap.getPixel(x, height - 1))
+            }
+        }
+        val iconOnly = base.copy(showTemperature = false)
+        val described = pixels(PixelRenderer.render(iconOnly, weather(), 320, 160))
+        val plain = pixels(PixelRenderer.render(iconOnly.copy(showCondition = false), weather(), 320, 160))
+        assertTrue(described.count { it == Color.WHITE } > plain.count { it == Color.WHITE })
+        assertArrayEquals(pixels(PixelRenderer.render(base.copy(showIcon = false), weather(), 320, 160)),
+            pixels(PixelRenderer.render(base.copy(showIcon = false, showCondition = false), weather(), 320, 160)))
+    }
+
+    @Test fun templateEditorValidatesCancelsAndPersists() {
+        val store = AppStore(context)
+        store.saveConfig(0, WidgetConfig(place = place, showCondition = true))
+        store.saveConfig(8, WidgetConfig(textTemplate = "OTHER"))
+        store.saveWeather(weather())
+        context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+        assertTrue(device.wait(Until.hasObject(By.text("Configuration")), 30_000))
+        compose.onNodeWithTag("configuration-scroll").performScrollToNode(hasText("Edit widget text"))
+        compose.onNodeWithText("Edit widget text").performClick()
+        compose.onNodeWithText("Text template").performTextReplacement("{bad}")
+        compose.onNodeWithText("Use text").assertIsNotEnabled()
+        compose.onNodeWithText("Cancel").performClick()
+        assertEquals(WidgetText.DEFAULT, store.config().textTemplate)
+        compose.onNodeWithText("Edit widget text").performClick()
+        compose.onNodeWithText("Text template").performTextReplacement("{temperature:unit}\n{condition}")
+        device.pressBack()
+        compose.onNodeWithText("Use text").assertIsDisplayed()
+        capture("text-editor.png")
+        compose.onNodeWithText("Use text").performClick()
+        compose.onNodeWithText("Save widget").performClick()
+        compose.waitForIdle()
+        val restored = AppStore(context)
+        assertEquals("{temperature:unit}\n{condition}", restored.config().textTemplate)
+        assertTrue(restored.config().showCondition)
+        assertEquals("OTHER", restored.config(8).textTemplate)
+        val example = File(context.getExternalFilesDir(null), "custom-text-example.png")
+        example.outputStream().use { PixelRenderer.render(restored.config().copy(textTemplate = "{temperature:unit}\n{location}",
+            backgroundColor = 0xff11151d.toInt()), weather(), 640, 320).compress(Bitmap.CompressFormat.PNG, 100, it) }
+        export(example)
+        capture("widget-text.png")
+    }
+
     @Test fun exportAppearanceExamples() {
         // Export the actual launcher drawable so repository artwork stays in sync with the app.
         val appIcon = Bitmap.createBitmap(256, 256, Bitmap.Config.ARGB_8888)

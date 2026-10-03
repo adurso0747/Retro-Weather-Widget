@@ -25,26 +25,36 @@ object PixelRenderer {
                 canvas.drawRect(x.toFloat(), y.toFloat(), (x + 4).toFloat(), (y + 4).toFloat(), paint)
             }
         }
-        val temperature = weather?.temperature(config.fahrenheit) ?: "--°${if (config.fahrenheit) "F" else "C"}"
+        val text = WidgetText.resolve(config, weather)
         var iconScale = a.iconScale.coerceIn(1, 3)
         var textScale = a.textScale.coerceIn(1, 4)
         var ip = a.iconPadding.coerceIn(0, 8)
         var tp = a.textPadding.coerceIn(0, 8)
         var showIcon = config.showIcon
+        var showCondition = config.showCondition && showIcon
         val showText = config.showTemperature
         val horizontal = config.layout == Layout.LEFT || config.layout == Layout.RIGHT
-        // On small widgets reduce requested sizes before giving up content. Never crop glyphs.
-        val outer = a.outerPadding.coerceIn(0, min(bitmap.width, bitmap.height) / 6)
+        // Reduce requested sizes before omitting secondary content on small hosts.
+        val outer = a.outerPadding.coerceIn(0, min(min(bitmap.width, bitmap.height) / 6, ((min(bitmap.width, bitmap.height) - 34) / 2).coerceAtLeast(0)))
         val availableW = bitmap.width - outer * 2
         val availableH = bitmap.height - outer * 2
         val rim = if (a.outlines) 1 else 0
+        var textBlock = PixelText.Block(emptyList())
+        var conditionBlock = PixelText.Block(emptyList())
         fun sizes(): IntArray {
-            val iw = if (showIcon) 32 * iconScale + ip * 2 else 0
-            val tw = if (showText) (temperature.length * 6 - 1) * textScale + tp * 2 else 0
-            val th = if (showText) 7 * textScale + tp * 2 else 0
+            conditionBlock = if (showCondition) PixelText.layout(weather?.kind?.label ?: "Unavailable",
+                (minOf(60, availableW - ip * 2 - rim * 2) + 1) / 6, 3) else PixelText.Block(emptyList())
+            val iw = if (showIcon) maxOf(32 * iconScale, conditionBlock.width) + ip * 2 else 0
+            val ih = if (showIcon) 32 * iconScale + ip * 2 + (if (showCondition) conditionBlock.height + 3 else 0) else 0
             val gap = if (showIcon && showText) 4 else 0
+            val textW = (availableW - rim * 2 - tp * 2 - if (horizontal) iw + gap else 0).coerceAtLeast(5 * textScale)
+            val textH = (availableH - rim * 2 - tp * 2 - if (!horizontal) ih + gap else 0).coerceAtLeast(7 * textScale)
+            textBlock = if (showText) PixelText.layout(text, ((textW / textScale + 1) / 6).coerceAtLeast(1),
+                ((textH / textScale + 2) / 9).coerceIn(1, 4)) else PixelText.Block(emptyList())
+            val tw = if (showText) textBlock.width * textScale + tp * 2 else 0
+            val th = if (showText) textBlock.height * textScale + tp * 2 else 0
             return intArrayOf(iw, tw, th, gap, (if (horizontal) iw + tw + gap else maxOf(iw, tw)) + rim * 2,
-                (if (horizontal) maxOf(iw, th) else iw + th + gap) + rim * 2)
+                (if (horizontal) maxOf(ih, th) else ih + th + gap) + rim * 2, ih)
         }
         var size = sizes()
         while ((size[4] > availableW || size[5] > availableH) && (iconScale > 1 || textScale > 1 || ip > 0 || tp > 0)) {
@@ -53,12 +63,16 @@ object PixelRenderer {
             ip = 0; tp = 0
             size = sizes()
         }
+        if ((size[4] > availableW || size[5] > availableH) && showCondition) {
+            showCondition = false
+            size = sizes()
+        }
         if ((size[4] > availableW || size[5] > availableH) && showIcon && showText) {
-            // A very narrow host displays the temperature until it is enlarged.
+            // A very narrow host displays the main text until it is enlarged.
             showIcon = false
             size = sizes()
         }
-        val iw = size[0]; val tw = size[1]; val th = size[2]; val gap = size[3]
+        val iw = size[0]; val tw = size[1]; val th = size[2]; val gap = size[3]; val ih = size[6]
         val logicalW = size[4]; val logicalH = size[5]
         val fit = min(availableW.toFloat() / logicalW.coerceAtLeast(1), availableH.toFloat() / logicalH.coerceAtLeast(1))
         val factor = if (a.dynamicSizing) (fit * config.scale).toInt().coerceAtLeast(1)
@@ -68,20 +82,25 @@ object PixelRenderer {
         val innerW = logicalW - rim * 2
         val innerH = logicalH - rim * 2
         val iconX = rim + ip + if (horizontal) { if (config.layout == Layout.RIGHT) tw + gap else 0 } else a.iconHorizontal.offset(innerW - iw)
-        val iconY = rim + ip + if (horizontal) a.iconVertical.offset(innerH - iw) else if (config.layout == Layout.BOTTOM) th + gap else 0
+        val iconY = rim + ip + if (horizontal) a.iconVertical.offset(innerH - ih) else if (config.layout == Layout.BOTTOM) th + gap else 0
         val textX = rim + tp + if (horizontal) { if (config.layout == Layout.LEFT && showIcon) iw + gap else 0 } else a.textHorizontal.offset(innerW - tw)
-        val textY = rim + tp + if (horizontal) a.textVertical.offset(innerH - th) else if (config.layout == Layout.TOP && showIcon) iw + gap else 0
+        val textY = rim + tp + if (horizontal) a.textVertical.offset(innerH - th) else if (config.layout == Layout.TOP && showIcon) ih + gap else 0
         val icons = mutableSetOf<Pair<Int, Int>>()
         val letters = mutableSetOf<Pair<Int, Int>>()
         if (showIcon) PixelArt.sprite(weather?.kind ?: WeatherKind.UNKNOWN, weather?.isDay ?: true, a.theme)
             .forEachIndexed { y, row -> row.forEachIndexed { x, on -> if (on) {
-                for (dy in 0 until iconScale) for (dx in 0 until iconScale) icons.add(iconX + x * iconScale + dx to iconY + y * iconScale + dy)
+                for (dy in 0 until iconScale) for (dx in 0 until iconScale) icons.add(iconX + (iw - ip * 2 - 32 * iconScale) / 2 + x * iconScale + dx to iconY + y * iconScale + dy)
             } } }
-        if (showText) temperature.forEachIndexed { i, char ->
-            PixelArt.glyphs.getValue(char).forEachIndexed { y, row -> row.forEachIndexed { x, c -> if (c == '1') {
-                for (dy in 0 until textScale) for (dx in 0 until textScale) letters.add(textX + (i * 6 + x) * textScale + dx to textY + y * textScale + dy)
-            } } }
+        fun addText(block: PixelText.Block, xStart: Int, yStart: Int, scale: Int, target: MutableSet<Pair<Int, Int>>, centered: Boolean = false) {
+            block.lines.forEachIndexed { line, value -> value.forEachIndexed { i, char ->
+                val offset = if (centered) (block.width - (value.length * 6 - 1).coerceAtLeast(0)) / 2 else 0
+                PixelText.glyph(char).forEachIndexed { y, row -> row.forEachIndexed { x, c -> if (c == '1') {
+                    for (dy in 0 until scale) for (dx in 0 until scale) target.add(xStart + (offset + i * 6 + x) * scale + dx to yStart + (line * 9 + y) * scale + dy)
+                } } }
+            } }
         }
+        if (showText) addText(textBlock, textX, textY, textScale, letters)
+        if (showIcon && showCondition) addText(conditionBlock, iconX + (iw - ip * 2 - conditionBlock.width) / 2, iconY + 32 * iconScale + 3, 1, icons, centered = true)
         fun drawCell(x: Int, y: Int) = canvas.drawRect((startX + x * factor).toFloat(), (startY + y * factor).toFloat(),
             (startX + (x + 1) * factor).toFloat(), (startY + (y + 1) * factor).toFloat(), paint)
         if (a.outlines) {

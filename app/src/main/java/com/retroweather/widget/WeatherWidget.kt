@@ -65,7 +65,7 @@ class WeatherWidget : AppWidgetProvider() {
             views.setTextViewText(R.id.widget_message, message)
             views.setViewVisibility(R.id.widget_message, if (message.isBlank()) View.GONE else View.VISIBLE)
             views.setContentDescription(R.id.widget_image, weather?.let {
-                "${it.kind.label}, ${it.temperature(config.fahrenheit)}. ${store.resolved(config)?.name}. ${if (it.stale()) "Saved weather is over two hours old." else ""} ${store.status(id)}"
+                "${it.kind.label}, ${it.temperature(config.fahrenheit)}. ${store.resolved(config)?.name}. ${if (config.showTemperature) WidgetText.resolve(config, it) else ""}. ${if (it.stale()) "Saved weather is over two hours old." else ""} ${store.status(id)}"
             } ?: message)
             val intent = Intent(context, MainActivity::class.java).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
                 // Recreate this standard activity even when its task is already in recents,

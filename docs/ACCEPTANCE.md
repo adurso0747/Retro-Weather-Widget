@@ -2,6 +2,8 @@
 
 The five user requirements and configurable app shortcut are mandatory. See [screenshot review](SCREENSHOT_REVIEW.md) for all reference-derived features, implementation status, and remaining work.
 
+These are acceptance requirements, not a list of passed checks. The October 2 audit found that the original release scope does **not** cover all screenshot features. Full screenshot parity remains incomplete; the backlog below records the additional acceptance work.
+
 ## Artwork and presentation
 
 - Original weather art is built from explicit pixels on a 32×32 grid, not generated pictures.
@@ -11,7 +13,10 @@ The five user requirements and configurable app shortcut are mandatory. See [scr
 - Clear and partly cloudy states have day/night variants; drizzle, rain, freezing precipitation, snow, showers, thunderstorms, hail, fog, and overcast are represented.
 - Preview and widget use the same pixel renderer. Resizing preserves whole pixel blocks.
 - °F/°C, four icon positions, text/icon visibility, scale, independent solid colors, custom RGB colors, and transparent/solid background are configurable.
-- At least one of icon and temperature remains visible.
+- At least one of icon and main widget text remains visible.
+- Main text supports validated, per-widget templates for temperature (with or without units), unit, condition, location, observation time and observation date. Old configurations retain temperature-only text.
+- An optional condition description appears beneath the weather icon, including when main text is hidden. It follows icon color/opacity and is hidden with the icon.
+- Text uses explicit pixel glyphs, wraps within available bounds and marks overflow with dots. The editor explains current Latin-font and device-timezone limitations.
 - Outline and solid pixel themes are selectable; previews and day/night gallery reflect the selected theme.
 - Icon and text have independent size, padding, horizontal and vertical alignment controls.
 - Icon, text and background each support opacity and solid colors or two-to-four-stop gradients. Stops can be edited, added, removed and reordered.
@@ -66,3 +71,26 @@ The five user requirements and configurable app shortcut are mandatory. See [scr
 - GitHub Actions builds the APK and runs unit tests, lint and deterministic emulator tests; debug APK and reports are available as workflow artifacts after a successful run.
 - Live-provider and launcher smoke tests are documented separately and do not require secrets in routine CI.
 - Physical-device battery/launcher validation remains a release sign-off task, not something an emulator can establish.
+
+## Screenshot parity backlog
+
+Status updated October 2, 2026 after the first implementation follow-up. Numbers reference the individually indexed screenshots in [the audit](SCREENSHOT_REVIEW.md). Checked items describe the supported scope; locale, additional provider fields and forecasts remain separate open work.
+
+- [ ] **Locale/timezone (3):** select and persist a timezone and locale per widget; display the timezone's current offset/time; use it for forecast, sunrise/sunset and date fields. Localize weekday/month names and provide readable fallback glyphs for unsupported scripts. Test daylight-saving transitions and device timezone changes.
+- [ ] **Units (4):** provide Metric, Imperial and Custom preferences for time format, temperature, wind speed, precipitation, pressure and distance. Obtain the corresponding weather fields, label units correctly and test conversion/rounding. Do not display fabricated values when a provider lacks a field.
+- [x] **Dynamic text (13):** edit, preview and persist validated templates with seven current-weather/location/observation-date fields, including `{temperature:unit}`. Field buttons, missing-data markers, cancel/reset, explicit pixel capitals, wrapping and overflow dots are implemented. Tests cover validation, old configurations, persistence and rendering. Non-Latin glyphs and locale overrides remain under locale/timezone above.
+- [x] **Weather subtext (19):** show/hide the condition beneath the weather icon; include it in preview, sizing, accessibility and saved configuration. It follows icon color/opacity and hides with the icon. Small hosts can omit it to preserve readable main content.
+- [ ] **Forecast (9, 20):** add hourly/daily data and cache support, show/hide, item count, forecast subtext controls and Forecast Middle layout. Test ordering across local midnight/DST, missing entries, offline data and fallback-provider differences. The screenshot shows five days selected, but the supported range and unopened subtext options still need specification.
+- [ ] **Color library/history (21, 22, 24–26):** add gradient presets and persisted recent colors/gradients, with the displayed hide/show behavior. Keep text, weather and base editing independent.
+- [ ] **Gradient gestures (23):** support dragging stops to reorder and a dismissible gesture hint; retain an accessible button alternative. Test order persistence and gradient output.
+- [ ] **Icon overlay (25):** enable/disable the custom icon overlay, with explicit default/text-color inheritance when disabled. Preserve the custom palette for re-enabling and test its interaction with opacity and global overlays.
+- [ ] **Background toggle (26):** preserve and restore the chosen background color/treatment when disabled/re-enabled; test transparency and zero opacity.
+- [ ] **Global overlays (30, 31):** independently enable an overlay across combined content and an overlay over background artwork. Use common bounds so gradients continue across elements. Define precedence over individual colors, opacity, outlines and cutout; test the combined result.
+- [ ] **Background themes (12):** provide original, explicitly placed pixel scene artwork and a No theme choice; keep scene selection distinct from base color. Include preview and saved-widget rendering. The screenshots do not specify a complete scene catalog.
+- [ ] **Animation (10, 11, 27):** author explicit frames and support playback enable, Normal/Slow/Slowest speed, power-saver disabling and a documented low-battery threshold consistent with the shown 20–25% range. Add day/night and play/pause theme previews. Verify supported launchers, screen-off behavior, process recovery and battery use before sign-off.
+- [ ] **Update age (1):** show elapsed time since a successful weather refresh without confusing it with observation time; maintain correct stale/offline status and manual refresh behavior.
+- [ ] **Preview controls (1):** specify and implement the intended palette/pushpin behavior. The screenshot shows the controls but does not demonstrate their actions; pinning the home-screen widget is not proof of preview pinning.
+- [ ] **Sizing and device validation (14–18, 28–29):** test all independent element alignment combinations and extreme supported widget bounds/temperature lengths. Define a readable minimum-size/overflow policy and verify it on the launcher.
+- [ ] **Shortcut completion checks (29, 31):** verify clear/change and app-update persistence on a device in addition to existing launch/missing-app checks. If matching the reference shortcut row's presentation, include the selected app icon and activity detail. App-specific deep links are not shown and remain outside this requirement.
+
+Full parity requires these checks plus the earlier core acceptance criteria. A passing current-weather test suite alone does not close this backlog.
