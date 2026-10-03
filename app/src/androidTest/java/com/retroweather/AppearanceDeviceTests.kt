@@ -146,7 +146,7 @@ class AppearanceDeviceTests {
         assertEquals(WidgetText.DEFAULT, store.config().textTemplate)
         compose.onNodeWithText("Edit widget text").performClick()
         compose.onNodeWithText("Text template").performTextReplacement("{temperature:unit}\n{condition}")
-        device.pressBack()
+        if (device.executeShellCommand("dumpsys input_method").contains("mInputShown=true")) device.pressBack()
         compose.onNodeWithText("Use text").assertIsDisplayed()
         capture("text-editor.png")
         compose.onNodeWithText("Use text").performClick()
