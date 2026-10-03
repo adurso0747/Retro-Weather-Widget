@@ -29,9 +29,7 @@ Configuration and icon editor, captured from the Android app with sample weather
 
 ## Try it
 
-Build the APK using the instructions below. Once the Android CI workflow has run successfully, its debug APK is available from [GitHub Actions](https://github.com/adurso0747/Retro-Weather-Widget/actions): open the run and download the `retro-weather-debug` artifact.
-
-**App version: 0.1.0** (`versionCode = 1`). See the [changelog](CHANGELOG.md). Build artifacts are debug-signed APKs; no GitHub Release has been published yet.
+**App version: 0.1.0** (`versionCode = 1`). Download the latest debug APK from [Releases](https://github.com/adurso0747/Retro-Weather-Widget/releases), then install with `adb install app-debug.apk`. See the [changelog](CHANGELOG.md).
 
 See [setup](#set-up), [development and tests](CONTRIBUTING.md), [acceptance criteria](docs/ACCEPTANCE.md), [screenshot review](docs/SCREENSHOT_REVIEW.md), and [verification results](docs/VERIFICATION.md).
 
@@ -43,7 +41,7 @@ See [setup](#set-up), [development and tests](CONTRIBUTING.md), [acceptance crit
 | Android Gradle Plugin | 9.4.1, with built-in Kotlin |
 | Gradle wrapper | 9.6.0 |
 | Compose BOM | 2026.02.01 |
-| Compile / target SDK | 37 |
+| Compile / target SDK | 35 |
 | Minimum Android | 8.0 / API 26 |
 | JDK used locally and in CI | 21 |
 
